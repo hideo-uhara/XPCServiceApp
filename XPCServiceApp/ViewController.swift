@@ -11,6 +11,7 @@ class ViewController: NSViewController, ClientServiceProtocol {
 	var urls: [URL] = []
 	
 	@IBOutlet var tableView: NSTableView!
+	@IBOutlet var selectDirectoryButton: NSButton!
 	
 	override func viewDidLoad() {
 		super.viewDidLoad()
@@ -29,6 +30,63 @@ class ViewController: NSViewController, ClientServiceProtocol {
 
 		
 		self.connectionToService.resume()
+		
+		// 保存したURLでファイル一覧取得
+		guard let savedBookmarkData: Data = UserDefaults.standard.object(forKey: "bookmarkData") as? Data else {
+			return
+		}
+			
+		var url: URL! = nil
+		
+		do {
+			var isStale: Bool = false
+			
+			url = try URL(resolvingBookmarkData: savedBookmarkData, options: [.withSecurityScope, .withoutMounting, .withoutUI], relativeTo: nil, bookmarkDataIsStale: &isStale)
+			
+			// bookmarkData再作成
+			if isStale {
+				var bookmarkData: Data! = nil
+				
+				do {
+					let _ = url.startAccessingSecurityScopedResource()
+					
+					bookmarkData = try url.bookmarkData(options: .withSecurityScope, includingResourceValuesForKeys: nil, relativeTo: nil)
+					url.stopAccessingSecurityScopedResource()
+				} catch {
+					NSLog("Error:%@[file=%@, line=%d]", error.localizedDescription, URL(fileURLWithPath: #file).lastPathComponent, #line)
+					return
+				}
+				
+				// urlを保存
+				UserDefaults.standard.set(bookmarkData, forKey: "bookmarkData")
+			}
+		} catch {
+			NSLog("Error:%@[file=%@, line=%d]", error.localizedDescription, URL(fileURLWithPath: #file).lastPathComponent, #line)
+			return
+		}
+		
+		var bookmarkData: Data! = nil
+		do {
+			let _ = url.startAccessingSecurityScopedResource()
+			bookmarkData = try url.bookmarkData(options: [], includingResourceValuesForKeys: nil, relativeTo: nil)
+			url.stopAccessingSecurityScopedResource()
+		} catch let error as NSError {
+			NSLog("Error:%@[file=%@, line=%d]", error.localizedDescription, URL(fileURLWithPath: #file).lastPathComponent, #line)
+			return
+		}
+			
+		self.selectDirectoryButton.isEnabled = false
+		
+		self.proxy.fileList(bookmarkData: bookmarkData, clientServiceProxy: self) { fileItems in
+			for fileItem: FileItem in fileItems {
+				print("\(fileItem.name) - \(fileItem.directory)")
+			}
+			
+			DispatchQueue.main.async {
+				self.selectDirectoryButton.isEnabled = true
+			}
+		}
+
 	}
 	
 	override var representedObject: Any? {
@@ -67,6 +125,18 @@ class ViewController: NSViewController, ClientServiceProtocol {
 							
 							DispatchQueue.main.async {
 								sender.isEnabled = true
+								
+								var bookmarkData: Data! = nil
+								
+								do {
+									bookmarkData = try url.bookmarkData(options: .withSecurityScope, includingResourceValuesForKeys: nil, relativeTo: nil)
+								} catch {
+									NSLog("Error:%@[file=%@, line=%d]", error.localizedDescription, URL(fileURLWithPath: #file).lastPathComponent, #line)
+									return
+								}
+								
+								// urlを保存
+								UserDefaults.standard.set(bookmarkData, forKey: "bookmarkData")
 							}
 						}
 					}
