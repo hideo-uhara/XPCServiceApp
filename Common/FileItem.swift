@@ -10,8 +10,13 @@ class FileItem: NSObject, NSSecureCoding {
 	var directory: String
 	
 	init(url: URL) {
-		self.name = FileManager.default.displayName(atPath: url.path)
-		self.directory = url.deletingLastPathComponent().path
+		if #available(macOS 13.0, *) {
+			self.name = FileManager.default.displayName(atPath: url.path(percentEncoded: false))
+			self.directory = url.deletingLastPathComponent().path(percentEncoded: false)
+		} else {
+			self.name = FileManager.default.displayName(atPath: url.path)
+			self.directory = url.deletingLastPathComponent().path
+		}
 	}
 	
 	func encode(with aCoder: NSCoder) {

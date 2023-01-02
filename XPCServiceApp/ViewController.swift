@@ -18,7 +18,7 @@ class ViewController: NSViewController, ClientServiceProtocol {
 		
 		self.connectionToService = NSXPCConnection(serviceName: "com.mac.uhara.XPCService")
 		self.connectionToService.remoteObjectInterface = NSXPCInterface(with: XPCServiceProtocol.self)
-		self.proxy = connectionToService.remoteObjectProxy as? XPCServiceProtocol
+		self.proxy = self.connectionToService.remoteObjectProxy as? XPCServiceProtocol
 		
 		// fileListメソッドのclientServiceProxyの引数はインスタンスではなく、ClientServiceProtocolのProxy
 		self.connectionToService.remoteObjectInterface?.setInterface(NSXPCInterface(with: ClientServiceProtocol.self), for: #selector(XPCServiceProtocol.fileList(bookmarkData:clientServiceProxy:reply:)), argumentIndex: 1, ofReply: false)
@@ -53,7 +53,11 @@ class ViewController: NSViewController, ClientServiceProtocol {
 					bookmarkData = try url.bookmarkData(options: .withSecurityScope, includingResourceValuesForKeys: nil, relativeTo: nil)
 					url.stopAccessingSecurityScopedResource()
 				} catch {
-					NSLog("Error:%@[file=%@, line=%d]", error.localizedDescription, URL(fileURLWithPath: #file).lastPathComponent, #line)
+					if #available(macOS 13.0, *) {
+						NSLog("Error:%@[file=%@, line=%d]", error.localizedDescription, URL(filePath: #file).lastPathComponent, #line)
+					} else {
+						NSLog("Error:%@[file=%@, line=%d]", error.localizedDescription, URL(fileURLWithPath: #file).lastPathComponent, #line)
+					}
 					return
 				}
 				
@@ -61,7 +65,11 @@ class ViewController: NSViewController, ClientServiceProtocol {
 				UserDefaults.standard.set(bookmarkData, forKey: "bookmarkData")
 			}
 		} catch {
-			NSLog("Error:%@[file=%@, line=%d]", error.localizedDescription, URL(fileURLWithPath: #file).lastPathComponent, #line)
+			if #available(macOS 13.0, *) {
+				NSLog("Error:%@[file=%@, line=%d]", error.localizedDescription, URL(filePath: #file).lastPathComponent, #line)
+			} else {
+				NSLog("Error:%@[file=%@, line=%d]", error.localizedDescription, URL(fileURLWithPath: #file).lastPathComponent, #line)
+			}
 			return
 		}
 		
@@ -71,7 +79,11 @@ class ViewController: NSViewController, ClientServiceProtocol {
 			bookmarkData = try url.bookmarkData(options: [], includingResourceValuesForKeys: nil, relativeTo: nil)
 			url.stopAccessingSecurityScopedResource()
 		} catch let error as NSError {
-			NSLog("Error:%@[file=%@, line=%d]", error.localizedDescription, URL(fileURLWithPath: #file).lastPathComponent, #line)
+			if #available(macOS 13.0, *) {
+				NSLog("Error:%@[file=%@, line=%d]", error.localizedDescription, URL(filePath: #file).lastPathComponent, #line)
+			} else {
+				NSLog("Error:%@[file=%@, line=%d]", error.localizedDescription, URL(fileURLWithPath: #file).lastPathComponent, #line)
+			}
 			return
 		}
 			
@@ -110,7 +122,11 @@ class ViewController: NSViewController, ClientServiceProtocol {
 						do {
 							bookmarkData = try url.bookmarkData(options: [], includingResourceValuesForKeys: nil, relativeTo: nil)
 						} catch let error as NSError {
-							NSLog("Error:%@[file=%@, line=%d]", error.localizedDescription, URL(fileURLWithPath: #file).lastPathComponent, #line)
+							if #available(macOS 13.0, *) {
+								NSLog("Error:%@[file=%@, line=%d]", error.localizedDescription, URL(filePath: #file).lastPathComponent, #line)
+							} else {
+								NSLog("Error:%@[file=%@, line=%d]", error.localizedDescription, URL(fileURLWithPath: #file).lastPathComponent, #line)
+							}
 							return
 						}
 						
@@ -131,7 +147,11 @@ class ViewController: NSViewController, ClientServiceProtocol {
 								do {
 									bookmarkData = try url.bookmarkData(options: .withSecurityScope, includingResourceValuesForKeys: nil, relativeTo: nil)
 								} catch {
-									NSLog("Error:%@[file=%@, line=%d]", error.localizedDescription, URL(fileURLWithPath: #file).lastPathComponent, #line)
+									if #available(macOS 13.0, *) {
+										NSLog("Error:%@[file=%@, line=%d]", error.localizedDescription, URL(filePath: #file).lastPathComponent, #line)
+									} else {
+										NSLog("Error:%@[file=%@, line=%d]", error.localizedDescription, URL(fileURLWithPath: #file).lastPathComponent, #line)
+									}
 									return
 								}
 								
@@ -151,7 +171,13 @@ class ViewController: NSViewController, ClientServiceProtocol {
 	}
 	
 	@objc func add(url: URL) {
-		//print(url.path)
+		/*
+		if #available(macOS 13.0, *) {
+			print(url.path(percentEncoded: false))
+		} else {
+			print(url.path)
+		}
+		*/
 		
 		DispatchQueue.main.async {
 			self.urls.append(url)
@@ -172,9 +198,17 @@ extension ViewController: NSTableViewDataSource {
 		let titleTextField: NSTextField = tableCellView.viewWithTag(1) as! NSTextField
 		
 		if tableColumn?.identifier.rawValue == "NameColumn" {
-			titleTextField.stringValue = FileManager.default.displayName(atPath: self.urls[row].path)
+			if #available(macOS 13.0, *) {
+				titleTextField.stringValue = FileManager.default.displayName(atPath: self.urls[row].path(percentEncoded: false))
+			} else {
+				titleTextField.stringValue = FileManager.default.displayName(atPath: self.urls[row].path)
+			}
 		} else if tableColumn?.identifier.rawValue == "DirectoryColumn" {
-			titleTextField.stringValue = self.urls[row].deletingLastPathComponent().path
+			if #available(macOS 13.0, *) {
+				titleTextField.stringValue = self.urls[row].deletingLastPathComponent().path(percentEncoded: false)
+			} else {
+				titleTextField.stringValue = self.urls[row].deletingLastPathComponent().path
+			}
 		}
 		
 		return tableCellView

@@ -13,7 +13,11 @@ class XPCService: NSObject, XPCServiceProtocol {
 			
 			dirUrl = try URL(resolvingBookmarkData: bookmarkData, options: [], relativeTo: nil, bookmarkDataIsStale: &isStale)
 		} catch let error as NSError {
-			NSLog("Error:%@[file=%@, line=%d]", error.localizedDescription, URL(fileURLWithPath: #file).lastPathComponent, #line)
+			if #available(macOS 13.0, *) {
+				NSLog("Error:%@[file=%@, line=%d]", error.localizedDescription, URL(filePath: #file).lastPathComponent, #line)
+			} else {
+				NSLog("Error:%@[file=%@, line=%d]", error.localizedDescription, URL(fileURLWithPath: #file).lastPathComponent, #line)
+			}
 			reply([])
 			return
 		}
@@ -25,10 +29,18 @@ class XPCService: NSObject, XPCServiceProtocol {
 		let propertiesForKeys: [URLResourceKey] = [.isDirectoryKey, .isPackageKey]
 		let options: FileManager.DirectoryEnumerationOptions = [.skipsPackageDescendants]
 		guard let enumerator = FileManager.default.enumerator(at: dirUrl, includingPropertiesForKeys: propertiesForKeys, options: options, errorHandler: { (url, error) -> Bool in
-			NSLog("Error:%@[path=%@, file=%@, line=%d]", error.localizedDescription, url.path, URL(fileURLWithPath: #file).lastPathComponent, #line)
+			if #available(macOS 13.0, *) {
+				NSLog("Error:%@[path=%@, file=%@, line=%d]", error.localizedDescription, url.path(percentEncoded: false), URL(filePath: #file).lastPathComponent, #line)
+			} else {
+				NSLog("Error:%@[path=%@, file=%@, line=%d]", error.localizedDescription, url.path, URL(fileURLWithPath: #file).lastPathComponent, #line)
+			}
 			return true
 		}) else {
-			NSLog("Error:FileManager.enumerator[path=%@, file=%@, line=%d]", dirUrl.path, URL(fileURLWithPath: #file).lastPathComponent, #line)
+			if #available(macOS 13.0, *) {
+				NSLog("Error:FileManager.enumerator[path=%@, file=%@, line=%d]", dirUrl.path(percentEncoded: false), URL(filePath: #file).lastPathComponent, #line)
+			} else {
+				NSLog("Error:FileManager.enumerator[path=%@, file=%@, line=%d]", dirUrl.path, URL(fileURLWithPath: #file).lastPathComponent, #line)
+			}
 			reply([])
 			return
 		}
@@ -48,7 +60,11 @@ class XPCService: NSObject, XPCServiceProtocol {
 				}
 				
 			} catch {
-				NSLog("Error:URL.resourceValues[path=%@, file=%@, line=%d]", url.path, URL(fileURLWithPath: #file).lastPathComponent, #line)
+				if #available(macOS 13.0, *) {
+					NSLog("Error:URL.resourceValues[path=%@, file=%@, line=%d]", url.path(percentEncoded: false), URL(filePath: #file).lastPathComponent, #line)
+				} else {
+					NSLog("Error:URL.resourceValues[path=%@, file=%@, line=%d]", url.path, URL(fileURLWithPath: #file).lastPathComponent, #line)
+				}
 			}
 		}
 		
