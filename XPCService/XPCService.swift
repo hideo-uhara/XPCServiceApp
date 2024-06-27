@@ -6,7 +6,7 @@ import Foundation
 
 class XPCService: NSObject, XPCServiceProtocol {
     
-	@objc func fileList(bookmarkData: Data, clientServiceProxy: ClientServiceProtocol, reply: @escaping ([FileItem]) -> Void) {
+	@objc func fileList(bookmarkData: Data, clientServiceProxy: ClientServiceProtocol, reply: @Sendable @escaping ([FileItem]) -> Void) {
 		var dirUrl: URL! = nil
 		do {
 			var isStale: Bool = false

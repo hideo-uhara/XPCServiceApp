@@ -170,7 +170,7 @@ class ViewController: NSViewController, ClientServiceProtocol {
 		}
 	}
 	
-	@objc func add(url: URL) {
+	@objc nonisolated func add(url: URL) {
 		/*
 		if #available(macOS 13.0, *) {
 			print(url.path(percentEncoded: false))
