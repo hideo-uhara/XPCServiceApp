@@ -193,6 +193,14 @@ extension ViewController: NSTableViewDataSource {
 		return self.urls.count
 	}
 	
+}
+
+extension ViewController: NSTableViewDelegate {
+	
+	func tableView(_ tableView: NSTableView, heightOfRow row: Int) -> CGFloat {
+		return 24.0
+	}
+	
 	func tableView(_ tableView: NSTableView, viewFor tableColumn: NSTableColumn?, row: Int) -> NSView? {
 		let tableCellView: NSTableCellView = tableView.makeView(withIdentifier: NSUserInterfaceItemIdentifier(rawValue: "TableCellView"), owner: nil) as! NSTableCellView
 		let titleTextField: NSTextField = tableCellView.viewWithTag(1) as! NSTextField
@@ -213,13 +221,6 @@ extension ViewController: NSTableViewDataSource {
 		
 		return tableCellView
 	}
-	
-}
 
-extension ViewController: NSTableViewDelegate {
-	
-	func tableView(_ tableView: NSTableView, heightOfRow row: Int) -> CGFloat {
-		return 24.0
-	}
 }
 
